@@ -1,5 +1,6 @@
 package com.example.sd_contextcam.data;
 
+import androidx.room.ColumnInfo; // <-- ADD THIS IMPORT
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 import androidx.room.Ignore;
@@ -11,22 +12,29 @@ public class Photo {
 
     public String filePath;
     public long timestamp;
-    public Double latitude = null;  // Changed to Double (nullable) instead of double
-    public Double longitude = null; // Changed to Double (nullable) instead of double
+    public Double latitude = null;
+    public Double longitude = null;
     public String wifiNetwork = "";
     public String calendarEvent = "";
+
+    // --- ADD THIS FIELD ---
+    @ColumnInfo(name = "is_encrypted") // Optional: Defines the column name
+    private boolean encrypted;
+    // --- END OF ADDITION ---
 
     @Ignore
     public Photo(String filePath, long timestamp) {
         this.filePath = filePath;
         this.timestamp = timestamp;
+        this.encrypted = false; // Default to false
     }
 
     // Default constructor for Room
     public Photo() {
+        this.encrypted = false; // Default to false
     }
 
-    // Getters and setters
+    // --- Getters and setters ---
     public int getId() {
         return id;
     }
@@ -51,19 +59,19 @@ public class Photo {
         this.timestamp = timestamp;
     }
 
-    public Double getLatitude() {  // Changed return type to Double
+    public Double getLatitude() {
         return latitude;
     }
 
-    public void setLatitude(Double latitude) {  // Changed parameter type to Double
+    public void setLatitude(Double latitude) {
         this.latitude = latitude;
     }
 
-    public Double getLongitude() {  // Changed return type to Double
+    public Double getLongitude() {
         return longitude;
     }
 
-    public void setLongitude(Double longitude) {  // Changed parameter type to Double
+    public void setLongitude(Double longitude) {
         this.longitude = longitude;
     }
 
@@ -82,4 +90,14 @@ public class Photo {
     public void setCalendarEvent(String calendarEvent) {
         this.calendarEvent = calendarEvent;
     }
+
+    // --- ADD GETTER AND SETTER FOR ENCRYPTED ---
+    public boolean isEncrypted() {
+        return encrypted;
+    }
+
+    public void setEncrypted(boolean encrypted) {
+        this.encrypted = encrypted;
+    }
+    // --- END OF ADDITION ---
 }

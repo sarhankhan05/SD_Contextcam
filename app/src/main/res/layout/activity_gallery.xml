@@ -4,39 +4,42 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#120A1E"
     tools:context=".GalleryActivity">
 
-    <!-- Toolbar with tag filter -->
+    <!-- Toolbar: Styled to match your theme -->
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="?attr/colorPrimary"
+        android:background="#120A1E"
         app:layout_constraintTop_toTopOf="parent"
         app:title="Gallery"
-        app:titleTextColor="@android:color/white" />
+        app:titleTextColor="#FFFFFF"
+        app:theme="@style/ThemeOverlay.MaterialComponents.Dark.ActionBar" />
 
-    <!-- Tags view - shows list of tags -->
+    <!-- Tags view: This is the main "Tag List" screen -->
     <LinearLayout
         android:id="@+id/tagsView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:orientation="vertical"
         android:visibility="gone"
+        tools:visibility="visible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toBottomOf="@id/toolbar">
 
-        <!-- RecyclerView for tags -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/tagsRecyclerView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:padding="4dp" />
+            android:padding="16dp"
+            tools:listitem="@layout/list_item_tag" />
 
     </LinearLayout>
 
-    <!-- Photos view - shows grid of photos -->
-    <LinearLayout
+    <!-- Photos view: This is the "Photo Grid" screen (MODIFIED) -->
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/photosView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -45,14 +48,33 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toBottomOf="@id/toolbar">
 
-        <!-- Tag filter section -->
+        <!-- =================== NEW BREADCRUMB TEXTVIEW =================== -->
+        <TextView
+            android:id="@+id/breadcrumbText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="12dp"
+            android:paddingBottom="12dp"
+            android:textColor="@android:color/white"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="Gallery > Important Documents" />
+        <!-- ============================================================= -->
+
+
+        <!-- Tag filter section: This will show active tag "chips" (Constrained to breadcrumb) -->
         <HorizontalScrollView
             android:id="@+id/tagFilterContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:padding="8dp"
             android:visibility="gone"
-            app:layout_constraintTop_toBottomOf="@id/toolbar">
+            app:layout_constraintTop_toBottomOf="@id/breadcrumbText">
 
             <LinearLayout
                 android:id="@+id/tagFilterLayout"
@@ -61,47 +83,74 @@
                 android:orientation="horizontal" />
         </HorizontalScrollView>
 
-        <!-- Date filter button -->
+        <!-- Date filter button (STYLED) -->
         <Button
             android:id="@+id/dateFilterButton"
             style="@style/Widget.MaterialComponents.Button.OutlinedButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_margin="8dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="8dp"
             android:text="Filter by Date"
-            android:visibility="gone"
+            android:textColor="#4AF0F4"
+            app:strokeColor="#4AF0F4"
+            android:visibility="visible"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/tagFilterContainer" />
 
-        <!-- Clear filters button -->
+        <!-- Vault button (STYLED) -->
+        <Button
+            android:id="@+id/vaultButton"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:text="Vault"
+            android:textColor="#4AF0F4"
+            app:strokeColor="#4AF0F4"
+            android:visibility="gone"
+            app:layout_constraintEnd_toStartOf="@id/clearFiltersButton"
+            app:layout_constraintTop_toTopOf="@id/dateFilterButton" />
+
+        <!-- Clear filters button (STYLED) -->
         <Button
             android:id="@+id/clearFiltersButton"
             style="@style/Widget.MaterialComponents.Button.TextButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_margin="8dp"
+            android:layout_marginEnd="16dp"
             android:text="Clear Filters"
-            android:visibility="gone"
+            android:textColor="#4AF0F4"
+            android:visibility="visible"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tagFilterContainer" />
+            app:layout_constraintTop_toTopOf="@id/dateFilterButton" />
 
-        <!-- RecyclerView for photos -->
+        <!-- RecyclerView for photos (CONSTRAINED) -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/photosRecyclerView"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:padding="4dp" />
+            android:layout_height="0dp"
+            android:padding="4dp"
+            android:layout_marginTop="8dp"
+            app:layout_constraintTop_toBottomOf="@id/dateFilterButton"
+            app:layout_constraintBottom_toBottomOf="parent"
+            tools:listitem="@layout/list_item_photo_grid" />
 
-    </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- Empty state view -->
+    <!-- Empty state view (STYLED) -->
     <TextView
         android:id="@+id/emptyStateText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="No photos found"
+        android:text="No Photos Found"
+        android:textColor="#AAAAAA"
         android:textSize="18sp"
         android:visibility="gone"
+        android:drawableTop="@drawable/ic_gallery"
+        android:drawablePadding="16dp"
+        app:drawableTint="#AAAAAA"
+        android:gravity="center"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

@@ -1,3 +1,101 @@
 <resources>
     <string name="app_name">SD_Contextcam</string>
+
+    <!-- Welcome Activity -->
+    <string name="welcome_title">Welcome to SD_Contextcam</string>
+    <string name="welcome_subtitle">Your Intelligent Photo Journal</string>
+    <string name="welcome_description">Organize your photos with smart tagging, secure vault storage, and intelligent batch processing.</string>
+    <string name="btn_grant_access">Grant Access &amp; Begin</string>
+
+    <!-- Permissions Activity -->
+    <string name="permissions_title">Permissions Required</string>
+    <string name="permissions_description">SD_Contextcam needs access to your camera, photos, and location to provide intelligent photo organization.</string>
+    <string name="btn_continue_allow_access">Continue &amp; Allow Access</string>
+
+    <!-- Main Activity -->
+    <string name="main_title">SD_Contextcam</string>
+    <string name="main_subtitle">Your Intelligent Photo Journal</string>
+    <string name="btn_open_camera">Open Camera</string>
+    <string name="btn_open_gallery">Open Gallery</string>
+    <string name="btn_open_vault">Open Vault</string>
+
+    <!-- Camera Activity -->
+    <string name="camera_title">Camera</string>
+    <string name="tag_session_indicator">Tagging as: %s</string>
+    <string name="vault_session_indicator">Saving to: Vault (Encrypted)</string>
+    <string name="tag_input_hint">Enter tag name</string>
+    <string name="btn_confirm_tag">Confirm</string>
+    <string name="btn_cancel_tag">Cancel</string>
+    <string name="add_new_tag">+ Add new tag: \'%s\'</string>
+    <string name="vault_option">Vault</string>
+    <string name="photo_captured">Photo captured</string>
+    <string name="photo_captured_with_tag">Photo captured with tag: %s</string>
+    <string name="photo_captured_vault">Photo captured and secured in vault</string>
+    <string name="error_securing_vault">Error securing photo in vault</string>
+
+    <!-- Gallery Activity -->
+    <string name="gallery_title">Gallery</string>
+    <string name="tags_view_title">Your Tags</string>
+    <string name="photos_view_title">Photos</string>
+    <string name="empty_state_no_photos">No photos found</string>
+    <string name="empty_state_no_tags">No tags found</string>
+    <string name="btn_vault">Vault</string>
+    <string name="btn_date_filter">Date Filter</string>
+    <string name="btn_clear_filters">Clear Filters</string>
+
+    <!-- Vault Activity -->
+    <string name="vault_title">Vault</string>
+    <string name="vault_auth_prompt">Authenticate to access your private photos</string>
+    <string name="btn_authenticate">Authenticate</string>
+    <string name="vault_empty_state">No photos in vault</string>
+    <string name="vault_auth_title">Vault Authentication</string>
+    <string name="vault_auth_subtitle">Authenticate to access your private photos</string>
+    <string name="vault_auth_cancel">Cancel</string>
+    <string name="choose_auth_method">Choose Authentication Method</string>
+    <string name="biometric_auth">Biometric Authentication</string>
+    <string name="pin_auth">Enter PIN</string>
+    <string name="create_pin_title">Create Vault PIN</string>
+    <string name="create_pin_message">Create a 4-digit PIN for accessing your vault. This is separate from your device\'s lock screen PIN.</string>
+    <string name="pin_hint">Enter your 4-digit PIN</string>
+    <string name="create_pin_hint">Create a 4-digit PIN</string>
+    <string name="btn_create">Create</string>
+    <string name="btn_ok">OK</string>
+    <string name="invalid_pin">Invalid PIN</string>
+    <string name="pin_created">PIN created successfully</string>
+    <string name="invalid_pin_format">Please enter a valid 4-digit PIN</string>
+
+    <!-- Batch Sorter Activity -->
+    <string name="batch_sorter_title">Organize Your Photos</string>
+    <string name="batch_sorter_description">We found photos in your device. Let\'s organize them with tags for easy access.</string>
+    <string name="scanning_photos">Scanning your photo library...</string>
+    <string name="btn_skip_sorting">Skip for now</string>
+    <string name="batch_title_format">%s</string>
+    <string name="batch_description_format">%s photos</string>
+    <string name="tag_input_hint_batch">Enter tag name</string>
+    <string name="btn_apply_tag">Apply Tag</string>
+    <string name="tagging_photos" formatted="false">Applying tag \'%s\' to %d photos...</string>
+    <string name="tag_applied_success" formatted="false">Successfully tagged %d photos as \'%s\'</string>
+    <string name="error_applying_tag">Error applying tag: %s</string>
+    <string name="error_creating_tag">Error creating tag</string>
+    <string name="no_photos_found">No existing photos found to organize.</string>
+
+    <!-- Photo Detail Activity -->
+    <string name="photo_detail_title">Photo Detail</string>
+    <string name="error_loading_photo">Error loading photo</string>
+    <string name="error_photo_path">Error: Photo path not provided</string>
+
+    <!-- Common -->
+    <string name="loading">Loading...</string>
+    <string name="error_generic">An error occurred</string>
+    <string name="permission_denied">Permission denied</string>
+    <string name="permission_required">Permission required</string>
+    <string name="no_biometric_hardware">No biometric features available on this device</string>
+    <string name="biometric_unavailable">Biometric features are currently unavailable</string>
+    <string name="biometric_not_enrolled">No biometric credentials enrolled. Please enroll in Settings</string>
+    <string name="auth_error">Authentication error: %s</string>
+    <string name="auth_failed">Authentication failed</string>
+    <string name="vault_access_granted">Vault access granted</string>
+    <string name="error_loading_vault">Error loading vault photos</string>
+    <string name="vault_auth_button">Authenticate</string>
+    <string name="vault_empty_text">Your vault is empty</string>
 </resources>

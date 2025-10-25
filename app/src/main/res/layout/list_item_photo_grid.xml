@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="0dp"
+    android:layout_margin="2dp"
+    app:cardBackgroundColor="#33FFFFFF">
+
+    <com.google.android.material.imageview.ShapeableImageView
+        android:id="@+id/photo_thumbnail"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:adjustViewBounds="true"
+        android:scaleType="centerCrop"
+        app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Small"
+        tools:src="@drawable/contextcam_logo" />
+
+    <ImageView
+        android:id="@+id/vault_icon"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:src="@drawable/ic_lock"
+        app:tint="#FFFFFF"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="8dp"
+        android:visibility="gone"
+        tools:visibility="visible"/>
+
+</androidx.cardview.widget.CardView>

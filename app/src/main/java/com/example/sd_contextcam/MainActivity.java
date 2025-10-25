@@ -29,20 +29,20 @@ public class MainActivity extends AppCompatActivity {
 
         // Setup ViewModel
         photoViewModel = new ViewModelProvider(this).get(PhotoViewModel.class);
-        
+
         // Find the buttons and set click listeners
         Button openCameraButton = findViewById(R.id.openCameraButton);
         openCameraButton.setOnClickListener(v -> {
             Intent intent = new Intent(MainActivity.this, CameraActivity.class);
             startActivity(intent);
         });
-        
+
         Button openGalleryButton = findViewById(R.id.openGalleryButton);
         openGalleryButton.setOnClickListener(v -> {
             Intent intent = new Intent(MainActivity.this, GalleryActivity.class);
             startActivity(intent);
         });
-        
+
         Button openVaultButton = findViewById(R.id.openVaultButton);
         openVaultButton.setOnClickListener(v -> {
             Intent intent = new Intent(MainActivity.this, VaultActivity.class);

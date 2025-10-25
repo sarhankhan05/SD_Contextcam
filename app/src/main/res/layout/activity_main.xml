@@ -5,15 +5,16 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#120A1E"
     tools:context=".MainActivity">
 
-    <TextView
-        android:id="@+id/titleText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="SD_ContextCam"
-        android:textSize="24sp"
-        android:textStyle="bold"
+
+    <ImageView
+        android:id="@+id/appLogo"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:src="@drawable/contextcam_logo"
+        android:contentDescription="App Logo"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -27,38 +28,64 @@
         android:layout_marginTop="8dp"
         android:text="Your Intelligent Photo Journal"
         android:textSize="16sp"
+        android:textColor="#AAAAAA"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/titleText" />
+        app:layout_constraintTop_toBottomOf="@id/appLogo" />
 
-    <Button
+    <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/openCameraButton"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="32dp"
+        android:layout_marginStart="32dp"
+        android:layout_marginEnd="32dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp"
         android:text="Open Camera"
+        android:textColor="#FFFFFF"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:background="@drawable/gradient_button_background"
+        app:backgroundTint="@null"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/taglineText" />
-        
-    <Button
+        app:layout_constraintTop_toBottomOf="@id/taglineText" />
+
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/openGalleryButton"
-        android:layout_width="wrap_content"
+        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
+        android:layout_marginStart="32dp"
+        android:layout_marginEnd="32dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp"
         android:text="Open Gallery"
+        android:textColor="#AAAAAA"
+        android:textStyle="bold"
+        app:strokeColor="#AAAAAA"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/openCameraButton" />
-        
-    <Button
+        app:layout_constraintTop_toBottomOf="@id/openCameraButton" />
+
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/openVaultButton"
-        android:layout_width="wrap_content"
+        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
+        android:layout_marginStart="32dp"
+        android:layout_marginEnd="32dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp"
         android:text="Open Vault"
+        android:textColor="#AAAAAA"
+        android:textStyle="bold"
+        app:strokeColor="#AAAAAA"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/openGalleryButton" />
+        app:layout_constraintTop_toBottomOf="@id/openGalleryButton" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
