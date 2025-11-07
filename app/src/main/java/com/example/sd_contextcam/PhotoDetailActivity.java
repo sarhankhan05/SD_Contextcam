@@ -1,140 +1,76 @@
+// In PhotoDetailActivity.java
 package com.example.sd_contextcam;
 
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.Bundle;
-import android.util.Log;
-import android.view.View;
-import android.widget.ImageView;
-import android.widget.ProgressBar;
+import android.widget.Button;
 import android.widget.Toast;
-
 import androidx.appcompat.app.AppCompatActivity;
-
-import com.example.sd_contextcam.security.EncryptionUtil;
-
-import java.io.File;
+import androidx.viewpager2.widget.ViewPager2;
+import java.io.Serializable;
+import java.util.List;
 
 public class PhotoDetailActivity extends AppCompatActivity {
-    private static final String TAG = "PhotoDetailActivity";
-    
-    public static final String EXTRA_PHOTO_PATH = "photo_path";
-    public static final String EXTRA_IS_VAULT_PHOTO = "is_vault_photo";
-    
-    private ImageView photoImageView;
-    private ProgressBar loadingProgressBar;
-    private EncryptionUtil encryptionUtil;
-    
+
+    public static final String EXTRA_PHOTO_LIST = "com.example.sd_contextcam.EXTRA_PHOTO_LIST";
+    public static final String EXTRA_CURRENT_POSITION = "com.example.sd_contextcam.EXTRA_CURRENT_POSITION";
+    public static final String EXTRA_IS_VAULT_PHOTO = "com.example.sd_contextcam.EXTRA_IS_VAULT_PHOTO";
+
+    public static final String EXTRA_CLICKED_PHOTO_ID = "com.example.sd_contextcam.EXTRA_CLICKED_PHOTO_ID";
+    public static final String EXTRA_VIEW_MODE = "com.example.sd_contextcam.EXTRA_VIEW_MODE";
+    public static final String EXTRA_TAG_ID = "com.example.sd_contextcam.EXTRA_TAG_ID";
+
+
+    private ViewPager2 viewPager;
+    private List<String> photoPaths;
+    private boolean isVaultPhoto;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_photo_detail);
-        
-        initViews();
-        setupEncryptionUtil();
-        loadPhoto();
-    }
-    
-    private void initViews() {
-        photoImageView = findViewById(R.id.photoImageView);
-        loadingProgressBar = findViewById(R.id.loadingProgressBar);
-        
-        // Set up click listener to toggle UI visibility
-        photoImageView.setOnClickListener(v -> toggleUIVisibility());
-    }
-    
-    private void setupEncryptionUtil() {
-        encryptionUtil = new EncryptionUtil(this);
-    }
-    
-    private void loadPhoto() {
-        String photoPath = getIntent().getStringExtra(EXTRA_PHOTO_PATH);
-        boolean isVaultPhoto = getIntent().getBooleanExtra(EXTRA_IS_VAULT_PHOTO, false);
-        
-        if (photoPath == null || photoPath.isEmpty()) {
-            Toast.makeText(this, "Error: Photo path not provided", Toast.LENGTH_SHORT).show();
+
+        viewPager = findViewById(R.id.photoViewPager);
+        Button saveToGalleryButton = findViewById(R.id.saveButton);
+
+        // Get the data from the intent
+        photoPaths = (List<String>) getIntent().getSerializableExtra(EXTRA_PHOTO_LIST);
+        int currentPosition = getIntent().getIntExtra(EXTRA_CURRENT_POSITION, 0);
+        isVaultPhoto = getIntent().getBooleanExtra(EXTRA_IS_VAULT_PHOTO, false);
+
+        if (photoPaths == null || photoPaths.isEmpty()) {
+            Toast.makeText(this, "Error: Photo list not found.", Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
-        
-        loadingProgressBar.setVisibility(View.VISIBLE);
-        
-        // Load photo in background thread
-        new Thread(() -> {
-            try {
-                Bitmap bitmap = null;
-                
-                if (isVaultPhoto) {
-                    // For vault photos, we need to decrypt them first
-                    File encryptedFile = new File(photoPath);
-                    if (encryptedFile.exists()) {
-                        // Create a temporary file for the decrypted photo
-                        File tempFile = new File(getCacheDir(), "temp_decrypted_photo.jpg");
-                        
-                        // Decrypt the photo
-                        boolean success = encryptionUtil.decryptPhoto(photoPath, tempFile.getAbsolutePath());
-                        if (success && tempFile.exists()) {
-                            // Load the decrypted photo
-                            bitmap = BitmapFactory.decodeFile(tempFile.getAbsolutePath());
-                            
-                            // Delete the temporary file
-                            tempFile.delete();
-                        }
-                    }
-                } else {
-                    // For regular photos, load directly
-                    File photoFile = new File(photoPath);
-                    if (photoFile.exists()) {
-                        bitmap = BitmapFactory.decodeFile(photoPath);
-                    }
-                }
-                
-                final Bitmap finalBitmap = bitmap;
-                runOnUiThread(() -> {
-                    loadingProgressBar.setVisibility(View.GONE);
-                    
-                    if (finalBitmap != null) {
-                        photoImageView.setImageBitmap(finalBitmap);
-                    } else {
-                        Toast.makeText(this, "Error loading photo", Toast.LENGTH_SHORT).show();
-                        finish();
-                    }
-                });
-            } catch (Exception e) {
-                Log.e(TAG, "Error loading photo", e);
-                runOnUiThread(() -> {
-                    loadingProgressBar.setVisibility(View.GONE);
-                    Toast.makeText(this, "Error loading photo: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                    finish();
-                });
-            }
-        }).start();
+
+        // Set up the adapter for the ViewPager
+        PhotoPagerAdapter adapter = new PhotoPagerAdapter(this, photoPaths, isVaultPhoto);
+        viewPager.setAdapter(adapter);
+
+        // Go to the photo that was actually clicked
+        viewPager.setCurrentItem(currentPosition, false);
+
+        // Set up the "Save to Gallery" button listener
+        saveToGalleryButton.setOnClickListener(v -> {
+            saveCurrentPhotoToGallery();
+        });
     }
-    
-    private void toggleUIVisibility() {
-        // Hide status bar and action bar for full screen
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().hide();
-        }
-        
-        // Toggle system UI visibility
-        View decorView = getWindow().getDecorView();
-        int uiOptions = decorView.getSystemUiVisibility();
-        if ((uiOptions & View.SYSTEM_UI_FLAG_FULLSCREEN) == View.SYSTEM_UI_FLAG_FULLSCREEN) {
-            // Currently in full screen, show UI
-            decorView.setSystemUiVisibility(
-                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
+
+    private void saveCurrentPhotoToGallery() {
+        if (photoPaths == null || photoPaths.isEmpty()) return;
+
+        // Get the path of the currently visible photo
+        int currentItem = viewPager.getCurrentItem();
+        String currentPhotoPath = photoPaths.get(currentItem);
+
+        // You need to implement this saving logic.
+        // It involves decrypting the photo and saving it to the public MediaStore.
+        boolean success = MediaSaver.savePhotoToGallery(this, currentPhotoPath, isVaultPhoto);
+
+        if (success) {
+            Toast.makeText(this, "Photo saved to gallery!", Toast.LENGTH_SHORT).show();
         } else {
-            // Not in full screen, hide UI
-            decorView.setSystemUiVisibility(
-                    View.SYSTEM_UI_FLAG_IMMERSIVE
-                            | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                            | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                            | View.SYSTEM_UI_FLAG_FULLSCREEN);
+            Toast.makeText(this, "Failed to save photo.", Toast.LENGTH_SHORT).show();
         }
     }
 }

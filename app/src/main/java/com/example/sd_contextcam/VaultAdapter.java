@@ -6,24 +6,15 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-
+import java.io.Serializable; // Import Serializable
 import java.util.ArrayList;
 import java.util.List;
 
 public class VaultAdapter extends RecyclerView.Adapter<VaultAdapter.VaultPhotoViewHolder> {
     private List<String> encryptedPhotoPaths = new ArrayList<>();
-    private OnVaultPhotoClickListener onVaultPhotoClickListener;
-
-    public interface OnVaultPhotoClickListener {
-        void onVaultPhotoClick(String encryptedPhotoPath);
-    }
-
-    public void setOnVaultPhotoClickListener(OnVaultPhotoClickListener listener) {
-        this.onVaultPhotoClickListener = listener;
-    }
+    // ... (listener interface is fine)
 
     public void setEncryptedPhotoPaths(List<String> encryptedPhotoPaths) {
         this.encryptedPhotoPaths = encryptedPhotoPaths;
@@ -41,7 +32,8 @@ public class VaultAdapter extends RecyclerView.Adapter<VaultAdapter.VaultPhotoVi
     @Override
     public void onBindViewHolder(@NonNull VaultPhotoViewHolder holder, int position) {
         String photoPath = encryptedPhotoPaths.get(position);
-        holder.bind(photoPath);
+        // Pass the full list and the current position to the ViewHolder
+        holder.bind(photoPath, encryptedPhotoPaths, position);
     }
 
     @Override
@@ -59,24 +51,25 @@ public class VaultAdapter extends RecyclerView.Adapter<VaultAdapter.VaultPhotoVi
             lockIcon = itemView.findViewById(R.id.lockIcon);
         }
 
-        public void bind(String photoPath) {
-            // TODO: Load thumbnail for encrypted photo
-            // For now, we'll set a placeholder
+        // MODIFIED: bind() now accepts the full list and position
+        public void bind(String photoPath, List<String> allPhotoPaths, int position) {
+            // ... (placeholder thumbnail logic is fine for now)
             photoThumbnail.setImageResource(R.drawable.ic_gallery);
 
-            // Set click listener
             itemView.setOnClickListener(v -> {
-                // Open photo in full screen
                 Context context = v.getContext();
                 Intent intent = new Intent(context, PhotoDetailActivity.class);
-                intent.putExtra(PhotoDetailActivity.EXTRA_PHOTO_PATH, photoPath);
-                intent.putExtra(PhotoDetailActivity.EXTRA_IS_VAULT_PHOTO, true); // Vault photos
+
+                // --- THIS IS THE FIX ---
+                // 1. Send the list of all photos
+                intent.putExtra(PhotoDetailActivity.EXTRA_PHOTO_LIST, (Serializable) allPhotoPaths);
+                // 2. Send the position of the clicked photo
+                intent.putExtra(PhotoDetailActivity.EXTRA_CURRENT_POSITION, position);
+                // 3. Keep the vault flag
+                intent.putExtra(PhotoDetailActivity.EXTRA_IS_VAULT_PHOTO, true);
+                // --- END FIX ---
+
                 context.startActivity(intent);
-                
-                // If we have a listener, also notify it
-                if (onVaultPhotoClickListener != null) {
-                    onVaultPhotoClickListener.onVaultPhotoClick(photoPath);
-                }
             });
         }
     }

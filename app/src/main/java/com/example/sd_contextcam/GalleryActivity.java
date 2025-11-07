@@ -34,24 +34,24 @@ import java.util.stream.Collectors;
 public class GalleryActivity extends AppCompatActivity {
     private static final String TAG = "GalleryActivity";
     private RecyclerView photosRecyclerView;
-    private RecyclerView tagsRecyclerView;  // New RecyclerView for tags
+    private RecyclerView tagsRecyclerView;
     private GalleryAdapter galleryAdapter;
-    private TagsAdapter tagsAdapter;  // New adapter for tags
+    private TagsAdapter tagsAdapter;
     private LinearLayout tagFilterLayout;
     private Button dateFilterButton;
     private Button clearFiltersButton;
     private TextView emptyStateText;
-    private View tagsView;  // View to show tags list
-    private View photosView;  // View to show photos grid
-
-    // ====================== MODIFICATION 1: DECLARE THE BREADCRUMB TEXTVIEW ======================
+    private View tagsView;
+    private View photosView;
     private TextView breadcrumbText;
-    // ===========================================================================================
-
     private PhotoViewModel photoViewModel;
-    private Tag currentTag;  // Keep track of currently selected tag
 
-    // Biometric authentication
+    // --- MODIFIED: State management variables to align with GalleryAdapter ---
+    private Tag currentTag = null;
+    private String currentViewMode = "TAGS"; // Possible values: "TAGS", "VAULT", "DATE"
+    private int currentTagId = -1; // -1 represents no specific tag (e.g., for Vault or All)
+    // --- END MODIFICATION ---
+
     private Executor executor;
     private BiometricPrompt biometricPrompt;
     private BiometricPrompt.PromptInfo promptInfo;
@@ -75,17 +75,15 @@ public class GalleryActivity extends AppCompatActivity {
                 if (photosView != null && photosView.getVisibility() == View.VISIBLE) {
                     Log.d(TAG, "Back pressed from photos view. Returning to tags view.");
                     showTagsView();
-
-                    currentTag = null;
-                    findViewById(R.id.tagFilterContainer).setVisibility(View.GONE);
-                    dateFilterButton.setVisibility(View.GONE);
-                    clearFiltersButton.setVisibility(View.GONE);
                 } else {
                     setEnabled(false);
                     getOnBackPressedDispatcher().onBackPressed();
                 }
             }
         });
+
+        // Initially show tags view
+        showTagsView();
     }
 
     private void initViews() {
@@ -98,11 +96,7 @@ public class GalleryActivity extends AppCompatActivity {
         emptyStateText = findViewById(R.id.emptyStateText);
         tagsView = findViewById(R.id.tagsView);
         photosView = findViewById(R.id.photosView);
-
-        // ====================== MODIFICATION 2: INITIALIZE THE BREADCRUMB TEXTVIEW ======================
-        // Assumes you have a TextView with the id 'breadcrumbText' in your activity_gallery.xml
         breadcrumbText = findViewById(R.id.breadcrumbText);
-        // ==============================================================================================
     }
 
     private void setupRecyclerViews() {
@@ -116,10 +110,99 @@ public class GalleryActivity extends AppCompatActivity {
         tagsRecyclerView.setAdapter(tagsAdapter);
 
         tagsAdapter.setOnTagClickListener(tag -> {
+            // When a tag is clicked, show photos for that specific tag
+            currentViewMode = "TAG"; // Set view mode to "TAG"
             showPhotosForTag(tag);
         });
     }
 
+    private void showVaultPhotos() {
+        Toast.makeText(this, "Vault access granted", Toast.LENGTH_SHORT).show();
+        showPhotosForTag(null);
+    }
+
+    // --- MODIFIED: This method now handles displaying photos for a specific tag ---
+    private void showPhotosForTag(Tag tag) {
+        currentTag = tag;
+        currentTagId = (tag != null) ? tag.id : -1;
+
+        breadcrumbText.setText("Gallery > " + tag.name);
+        findViewById(R.id.tagFilterContainer).setVisibility(View.VISIBLE);
+        dateFilterButton.setVisibility(View.VISIBLE);
+        clearFiltersButton.setVisibility(View.VISIBLE);
+        tagsView.setVisibility(View.GONE);
+        photosView.setVisibility(View.VISIBLE);
+
+        // Tell ViewModel to load the photos for this specific tag
+        // --- THIS IS THE FIX ---
+        photoViewModel.loadPhotosByTagId(currentTagId);
+    }
+
+    private void showTagsView() {
+        currentTag = null;
+        currentTagId = -1;
+        currentViewMode = "TAGS"; // The main view is the list of tags
+
+        breadcrumbText.setText("Gallery");
+        findViewById(R.id.tagFilterContainer).setVisibility(View.GONE);
+        dateFilterButton.setVisibility(View.GONE);
+        clearFiltersButton.setVisibility(View.GONE);
+        tagsView.setVisibility(View.VISIBLE);
+        photosView.setVisibility(View.GONE);
+
+        // Refresh the tags list to get updated photo counts
+        photoViewModel.loadTags();
+    }
+
+    private void setupViewModel() {
+        Log.d(TAG, "Setting up ViewModel");
+        photoViewModel = new ViewModelProvider(this).get(PhotoViewModel.class);
+    }
+
+    private void observeViewModel() {
+        Log.d(TAG, "Observing ViewModel");
+
+        // --- MODIFIED: The photo observer now passes the required context to the adapter ---
+        photoViewModel.getPhotos().observe(this, photos -> {
+            if (photos != null) {
+                Log.d(TAG, "Photo list updated with " + photos.size() + " photos for mode: " + currentViewMode + ", tagId: " + currentTagId);
+                // Pass the current context to the adapter so it can forward it to the detail activity
+                galleryAdapter.setPhotos(photos, currentTagId, currentViewMode);
+
+                if (photos.isEmpty()) {
+                    emptyStateText.setVisibility(View.VISIBLE);
+                    photosRecyclerView.setVisibility(View.GONE);
+                } else {
+                    emptyStateText.setVisibility(View.GONE);
+                    photosRecyclerView.setVisibility(View.VISIBLE);
+                }
+            }
+        });
+        // --- END MODIFICATION ---
+
+        photoViewModel.getTags().observe(this, tags -> {
+            if (tags != null) {
+                Log.d(TAG, "Tags loaded: " + tags.size());
+                new Thread(() -> {
+                    List<Integer> photoCounts = new ArrayList<>();
+                    for (Tag tagItem : tags) {
+                        int count = photoViewModel.getRepository().getPhotoCountForTag(tagItem.id);
+                        photoCounts.add(count);
+                    }
+                    runOnUiThread(() -> {
+                        tagsAdapter.setTags(tags, photoCounts);
+                    });
+                }).start();
+            }
+        });
+
+        photoViewModel.getIsLoading().observe(this, isLoading -> {
+            // TODO: Show/hide a proper loading indicator
+        });
+    }
+
+    // Other methods like setupBiometricAuthentication() and setupFilters() remain the same
+    // ...
     private void setupBiometricAuthentication() {
         executor = ContextCompat.getMainExecutor(this);
         biometricPrompt = new BiometricPrompt(this, executor, new BiometricPrompt.AuthenticationCallback() {
@@ -148,140 +231,6 @@ public class GalleryActivity extends AppCompatActivity {
                 .setNegativeButtonText("Cancel")
                 .build();
     }
-
-    private void authenticateForVault() {
-        BiometricManager biometricManager = BiometricManager.from(this);
-        switch (biometricManager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG)) {
-            case BiometricManager.BIOMETRIC_SUCCESS:
-                biometricPrompt.authenticate(promptInfo);
-                break;
-            case BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE:
-                Toast.makeText(this, "No biometric features available on this device", Toast.LENGTH_SHORT).show();
-                break;
-            case BiometricManager.BIOMETRIC_ERROR_HW_UNAVAILABLE:
-                Toast.makeText(this, "Biometric features are currently unavailable", Toast.LENGTH_SHORT).show();
-                break;
-            case BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED:
-                Toast.makeText(this, "No biometric credentials enrolled. Please enroll in Settings", Toast.LENGTH_SHORT).show();
-                break;
-        }
-    }
-
-    private void showVaultPhotos() {
-        Toast.makeText(this, "Vault access granted", Toast.LENGTH_SHORT).show();
-        showPhotosForTag(null);
-    }
-
-    private void showPhotosForTag(Tag tag) {
-        currentTag = tag;
-
-        findViewById(R.id.tagFilterContainer).setVisibility(View.VISIBLE);
-        dateFilterButton.setVisibility(View.VISIBLE);
-        clearFiltersButton.setVisibility(View.VISIBLE);
-
-        tagsView.setVisibility(View.GONE);
-        photosView.setVisibility(View.VISIBLE);
-
-        if (tag != null) {
-            // ====================== MODIFICATION 3: SET BREADCRUMB TEXT FOR A TAG ======================
-            breadcrumbText.setText("Gallery > " + tag.name);
-            // =========================================================================================
-
-            photoViewModel.getPhotosByTag(tag.id).observe(this, photos -> {
-                if (photos != null) {
-                    Log.d(TAG, "Photos loaded for tag " + tag.name + ": " + photos.size());
-                    galleryAdapter.setPhotos(photos);
-
-                    if (photos.isEmpty()) {
-                        Log.d(TAG, "No photos found for tag, showing empty state");
-                        emptyStateText.setVisibility(View.VISIBLE);
-                        photosRecyclerView.setVisibility(View.GONE);
-                    } else {
-                        Log.d(TAG, "Photos found for tag, showing gallery");
-                        emptyStateText.setVisibility(View.GONE);
-                        photosRecyclerView.setVisibility(View.VISIBLE);
-                    }
-                }
-            });
-        } else {
-            // ====================== MODIFICATION 4: SET BREADCRUMB TEXT FOR THE VAULT ======================
-            breadcrumbText.setText("Gallery > Vault");
-            // ============================================================================================
-
-            galleryAdapter.setPhotos(new ArrayList<>());
-            emptyStateText.setVisibility(View.VISIBLE);
-            photosRecyclerView.setVisibility(View.GONE);
-        }
-    }
-
-    private void showTagsView() {
-        tagsView.setVisibility(View.VISIBLE);
-        photosView.setVisibility(View.GONE);
-    }
-
-    private void setupViewModel() {
-        Log.d(TAG, "Setting up ViewModel");
-        photoViewModel = new ViewModelProvider(this).get(PhotoViewModel.class);
-        photoViewModel.loadPhotos();
-        photoViewModel.loadTags();
-    }
-
-    private void observeViewModel() {
-        Log.d(TAG, "Observing ViewModel");
-        photoViewModel.getPhotos().observe(this, photos -> {
-            if (photos != null) {
-                Log.d(TAG, "Photos loaded: " + photos.size());
-                galleryAdapter.setPhotos(photos);
-
-                if (photos.isEmpty()) {
-                    Log.d(TAG, "No photos found, showing empty state");
-                    emptyStateText.setVisibility(View.VISIBLE);
-                    photosRecyclerView.setVisibility(View.GONE);
-                } else {
-                    Log.d(TAG, "Photos found, showing gallery");
-                    emptyStateText.setVisibility(View.GONE);
-                    photosRecyclerView.setVisibility(View.VISIBLE);
-                }
-            }
-        });
-
-        photoViewModel.getTags().observe(this, tags -> {
-            if (tags != null) {
-                Log.d(TAG, "Tags loaded: " + tags.size());
-                new Thread(() -> {
-                    List<Integer> photoCounts = new ArrayList<>();
-                    for (Tag tagItem : tags) {
-                        int count = photoViewModel.getRepository().getPhotoCountForTag(tagItem.id);
-                        photoCounts.add(count);
-                    }
-
-                    runOnUiThread(() -> {
-                        tagsAdapter.setTags(tags, photoCounts);
-                        showTagsView();
-                    });
-                }).start();
-            }
-        });
-
-        photoViewModel.getIsLoading().observe(this, isLoading -> {
-            // TODO: Show/hide loading indicator
-        });
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        Log.d(TAG, "onResume called.");
-
-        if (tagsView.getVisibility() == View.VISIBLE) {
-            Log.d(TAG, "Resuming to tags view, reloading tags.");
-            photoViewModel.loadTags();
-        } else if (currentTag != null) {
-            Log.d(TAG, "Resuming to photos view for tag: " + currentTag.name + ", reloading its photos.");
-            showPhotosForTag(currentTag);
-        }
-    }
-
     private void setupFilters() {
         Log.d(TAG, "Setting up filters");
         dateFilterButton.setOnClickListener(v -> {
@@ -296,7 +245,6 @@ public class GalleryActivity extends AppCompatActivity {
             }
         });
     }
-
     private void showDateFilterDialog() {
         Calendar calendar = Calendar.getInstance();
         int year = calendar.get(Calendar.YEAR);

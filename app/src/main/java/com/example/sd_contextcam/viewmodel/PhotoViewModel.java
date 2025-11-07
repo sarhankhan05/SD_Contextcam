@@ -1,8 +1,8 @@
 package com.example.sd_contextcam.viewmodel;
 
 import android.app.Application;
-import android.os.Handler; // <-- ADD THIS IMPORT
-import android.os.Looper;  // <-- ADD THIS IMPORT
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -12,7 +12,7 @@ import androidx.lifecycle.MutableLiveData;
 
 import com.example.sd_contextcam.data.Photo;
 import com.example.sd_contextcam.data.Tag;
-import com.example.sd_contextcam.data.TagRepository; // Assuming this is your Repository class
+import com.example.sd_contextcam.data.TagRepository;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,37 +21,32 @@ import java.util.concurrent.Executors;
 
 public class PhotoViewModel extends AndroidViewModel {
     private static final String TAG = "PhotoViewModel";
-    private TagRepository repository; // Renamed for clarity if it handles more than just tags
+    private TagRepository repository;
     private ExecutorService executorService;
 
-    // LiveData (Keep these for observing lists)
+    // The single source of truth for the list of photos being displayed.
     private MutableLiveData<List<Photo>> photosLiveData = new MutableLiveData<>();
     private MutableLiveData<List<Tag>> tagsLiveData = new MutableLiveData<>();
     private MutableLiveData<Boolean> isLoading = new MutableLiveData<>();
-    // private MutableLiveData<Integer> lastInsertedPhotoId = new MutableLiveData<>(); // REMOVED - Replaced by callbacks
 
-    // --- ADD Callback Interface for Inserts ---
     public interface InsertCallback {
-        void onInsertComplete(long id); // Use long for Room IDs
+        void onInsertComplete(long id);
     }
-    // --- END ---
 
-    // Callback for fetching a single tag
     public interface TagCallback {
         void onTagReceived(Tag tag);
     }
 
     public PhotoViewModel(@NonNull Application application) {
         super(application);
-        // Ensure TagRepository handles Photo and PhotoTagJoin operations too
         repository = new TagRepository(application);
         executorService = Executors.newFixedThreadPool(2);
         isLoading.postValue(false);
     }
 
-    // --- LiveData Getters (Keep these) ---
+    // --- LiveData Getters ---
     public LiveData<List<Photo>> getPhotos() {
-        return photosLiveData;
+        return photosLiveData; // The Activity observes this
     }
 
     public LiveData<List<Tag>> getTags() {
@@ -62,41 +57,31 @@ public class PhotoViewModel extends AndroidViewModel {
         return isLoading;
     }
 
-    /* // REMOVED getter for lastInsertedPhotoId
-    public LiveData<Integer> getLastInsertedPhotoId() {
-        return lastInsertedPhotoId;
-    }
-    */
-
-    public TagRepository getRepository() { // Consider renaming if it handles Photos too
+    public TagRepository getRepository() {
         return repository;
     }
 
-    // --- Data Loading Methods (Keep these) ---
-
-    public LiveData<List<Photo>> getPhotosByTag(int tagId) {
-        MutableLiveData<List<Photo>> photosByTagLiveData = new MutableLiveData<>();
+    public void loadPhotosByTagId(int tagId) {
         isLoading.postValue(true);
         executorService.execute(() -> {
             try {
-                // Ensure repository has this method
                 List<Photo> photos = repository.getPhotosWithTag(tagId);
-                photosByTagLiveData.postValue(photos);
+                // Correctly post the new list to the main photosLiveData object
+                photosLiveData.postValue(photos);
             } catch (Exception e) {
                 Log.e(TAG, "Error loading photos for tag: " + tagId, e);
-                photosByTagLiveData.postValue(new ArrayList<>());
+                photosLiveData.postValue(new ArrayList<>()); // Post an empty list on error
             } finally {
                 isLoading.postValue(false);
             }
         });
-        return photosByTagLiveData;
     }
+    // ========================== END OF FIX ===========================
 
     public void loadPhotos() {
         isLoading.postValue(true);
         executorService.execute(() -> {
             try {
-                // Ensure repository has this method
                 List<Photo> photos = repository.getAllPhotos();
                 photosLiveData.postValue(photos);
             } catch (Exception e) {
@@ -112,7 +97,6 @@ public class PhotoViewModel extends AndroidViewModel {
         isLoading.postValue(true);
         executorService.execute(() -> {
             try {
-                // Ensure repository has this method
                 List<Tag> tags = repository.getAllTags();
                 tagsLiveData.postValue(tags);
             } catch (Exception e) {
@@ -124,23 +108,18 @@ public class PhotoViewModel extends AndroidViewModel {
         });
     }
 
-    // --- Data Modification Methods ---
+    // --- Data Modification Methods (Your existing code, looks good) ---
 
-    // --- MODIFIED addPhoto to use Callback ---
     public void addPhoto(Photo photo, InsertCallback callback) {
         executorService.execute(() -> {
-            long newId = -1; // Default error value
+            long newId = -1;
             try {
-                // IMPORTANT: Ensure repository.insertPhoto returns long (the row ID)
                 newId = repository.insertPhoto(photo);
                 Log.d(TAG, "Inserted photo, got ID: " + newId);
-                // Optionally reload all photos if needed elsewhere, but don't rely on it for the ID
-                // loadPhotos();
             } catch (Exception e) {
                 Log.e(TAG, "Error adding photo", e);
             } finally {
                 final long finalId = newId;
-                // Post result back to the main thread for the callback
                 new Handler(Looper.getMainLooper()).post(() -> {
                     if (callback != null) {
                         callback.onInsertComplete(finalId);
@@ -150,21 +129,17 @@ public class PhotoViewModel extends AndroidViewModel {
         });
     }
 
-    // --- MODIFIED addTag to use Callback ---
     public void addTag(Tag tag, InsertCallback callback) {
         executorService.execute(() -> {
-            long newId = -1; // Default error value
+            long newId = -1;
             try {
-                // IMPORTANT: Ensure repository.insertTag returns long (the row ID)
                 newId = repository.insertTag(tag);
                 Log.d(TAG, "Inserted tag, got ID: " + newId);
-                // Reload tags immediately so they appear in suggestions
                 loadTags();
             } catch (Exception e) {
                 Log.e(TAG, "Error adding tag", e);
             } finally {
                 final long finalId = newId;
-                // Post result back to the main thread
                 new Handler(Looper.getMainLooper()).post(() -> {
                     if (callback != null) {
                         callback.onInsertComplete(finalId);
@@ -174,11 +149,9 @@ public class PhotoViewModel extends AndroidViewModel {
         });
     }
 
-    // --- MODIFIED addTagToPhoto to accept long photoId ---
-    public void addTagToPhoto(long photoId, int tagId) { // Changed first parameter to long
+    public void addTagToPhoto(long photoId, int tagId) {
         executorService.execute(() -> {
             try {
-                // IMPORTANT: Ensure repository.addTagToPhoto accepts (long, int)
                 repository.addTagToPhoto((int) photoId, tagId);
                 Log.d(TAG, "Linked photo " + photoId + " to tag " + tagId);
             } catch (Exception e) {
@@ -186,9 +159,7 @@ public class PhotoViewModel extends AndroidViewModel {
             }
         });
     }
-    // --- END MODIFICATION ---
 
-    // getTagByName with callback (keep as is, looks correct)
     public void getTagByName(String tagName, TagCallback callback) {
         executorService.execute(() -> {
             Tag tag = null;
@@ -207,11 +178,10 @@ public class PhotoViewModel extends AndroidViewModel {
         });
     }
 
-    // removeTagFromPhoto (keep as is, but consider changing photoId to long)
-    public void removeTagFromPhoto(int photoId, int tagId) { // Consider changing photoId to long
+    public void removeTagFromPhoto(int photoId, int tagId) {
         executorService.execute(() -> {
             try {
-                repository.removeTagFromPhoto(photoId, tagId); // Ensure repository matches
+                repository.removeTagFromPhoto(photoId, tagId);
             } catch (Exception e) {
                 Log.e(TAG, "Error removing tag from photo", e);
             }

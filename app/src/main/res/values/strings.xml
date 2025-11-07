@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">SD_Contextcam</string>
+    <string name="app_name">Contextcam</string>
 
     <!-- Welcome Activity -->
     <string name="welcome_title">Welcome to SD_Contextcam</string>
